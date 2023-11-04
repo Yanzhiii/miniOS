@@ -1,4 +1,7 @@
 ;Main Boot Record
+;
+;LOADER_BASE_ADDR equ OxAOOO
+;LOADER_START_SECTOR equ 0x2
 ;-------------------------------------------------------------------------------
 SECTION MBR vstart=0x7c00
     mov ax, cs
@@ -7,6 +10,8 @@ SECTION MBR vstart=0x7c00
     mov ss, ax
     mov fs, ax
     mov sp, 0x7c00
+    mov ax, 0xb800
+    mov gs, ax
 
 ;INT 0x10   FUNC 0x06
 ;Video: Intialize window/scroll text upward.
@@ -27,57 +32,24 @@ SECTION MBR vstart=0x7c00
 
     int 0x10
 
-;INT 0x10   FUNC 0x03
-;Video: Sence the cursor's position, starting line and ending line in a
-;       display page.
-;-------------------------------------------------------------------------------
-;Input:
-;AH = 0x03
-;BH = Dispaly page number
-;CH = Starting line of the blinking cursor
-;CL = Ending line of the blinking cursor
-;(DL, DH) = Screen line in which the cursor is located
-;Output:
-;No output
-;;;;;;;;    Get Cursor Position    ;;;;;;;;
-    mov ah, 3
-    mov bh, 0
+;Using graphics card
+    mov byte [gs:0x00],'1'
+    mov byte [gs:0x01],0xA4
 
-    int 0x10
+    mov byte [gs:0x02],' '
+    mov byte [gs:0x03],0xA4
+
+    mov byte [gs:0x04],'M'
+    mov byte [gs:0x05],0xA4
+
+    mov byte [gs:0x06],'B'
+    mov byte [gs:0x07],0xA4
+
+    mov byte [gs:0x08],'R'
+    mov byte [gs:0x09],0xA4
+
 ;;;;;;;;    END    ;;;;;;;;
-
-;INT 0x10   FUNC 0x13
-;Video: Write character string
-;-------------------------------------------------------------------------------
-;Input:
-;AH = 0x13
-;AL = Output mode (0-3)
-;       0: Attribute in BL, retain cursor position
-;       1: Attribute in BL, update cursor position
-;       2: Attribute in the buffer, retain cursor position
-;       3: Attrivute in the buffer, update cursor position
-;BH = Dispaly page number
-;BL = Attribute byte of the character
-;BP = Offset address of the buffer
-;CX = Number of characters to be displayed
-;DH = display line
-;DL = display column
-;ES = segment address of the buffer
-;Output:
-;No output
-;;;;;;;;    Print String    ;;;;;;;;
-    mov ax, message
-    mov bp, ax
-
-    mov cx, 5
-    mov ax, 0x1301
-    mov bx, 0x2
-
-    int 0x10
-;;;;;;;;    END    ;;;;;;;;
-
     jmp $
 
-    message db "1 MBR"
     times 510-($-$$) db 0
     db 0x55, 0xaa
